@@ -321,12 +321,15 @@ connect(State) ->
                         ok ->
                             {ok, State#state{socket = Socket}};
                         {error, Reason} ->
+                            error_logger:error_msg("DEBUG-2020-03-20>> eredis_client:connect -> failed to select_database due to ~p", [Reason]),
                             {error, {select_error, Reason}}
                     end;
                 {error, Reason} ->
+                    error_logger:error_msg("DEBUG-2020-03-20>> eredis_client:connect -> failed to authenticate due to ~p", [Reason]),
                     {error, {authentication_error, Reason}}
             end;
         {error, Reason} ->
+            error_logger:error_msg("DEBUG-2020-03-20>> eredis_client:connect -> gen_tcp failed to connect due to ~p", [Reason]),
             {error, {connection_error, Reason}}
     end.
 
@@ -378,13 +381,13 @@ do_sync_command(Socket, Command) ->
     end.
 
 maybe_reconnect(Reason, #state{reconnect_sleep = no_reconnect, queue = Queue} = State) ->
+    error_logger:error_msg("DEBUG-2020-03-20>> eredis_client:maybe_reconnect -> reconnect_sleep = no_reconnect due to ~p", [Reason]),
     reply_all({error, Reason}, Queue),
     %% If we aren't going to reconnect, then there is nothing else for
     %% this process to do.
     {stop, normal, State#state{socket = undefined}};
 maybe_reconnect(Reason, #state{queue = Queue} = State) ->
-    error_logger:error_msg("eredis: Re-establishing connection to ~p:~p due to ~p",
-                           [State#state.host, State#state.port, Reason]),
+    error_logger:error_msg("DEBUG-2020-03-20>> eredis_client:maybe_reconnect Re-establishing connection to ~p:~p due to ~p. Socket being changed to undefined for now.", [State#state.host, State#state.port, Reason]),
     Self = self(),
     spawn_link(fun() -> reconnect_loop(Self, State) end),
 
@@ -406,7 +409,8 @@ reconnect_loop(Client, #state{reconnect_sleep = ReconnectSleep} = State) ->
             gen_tcp:controlling_process(Socket, Client),
             Msgs = get_all_messages([]),
             [Client ! M || M <- Msgs];
-        {error, _Reason} ->
+        {error, Reason} ->
+            error_logger:error_msg("DEBUG-2020-03-20>> eredis_client:reconnect_loop Recursively calling reconnect_loop due to ~p", [Reason]),
             timer:sleep(ReconnectSleep),
             reconnect_loop(Client, State);
         %% Something bad happened when connecting, like Redis might be
