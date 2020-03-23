@@ -5,8 +5,8 @@ defmodule Eredis.Mixfile do
     [
       app: :eredis,
       version: "1.2.0",
-      elixir: "~> 1.5.1",
-      start_permanent: Mix.env == :prod,
+      elixir: "~> 1.9.1",
+      start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
   end
