@@ -264,7 +264,7 @@ reply(Value, Queue) ->
             queue:in_r({N - 1, From, [Value | Replies]}, NewQueue);
         {empty, Queue} ->
             %% Oops
-            error_logger:info_msg("eredis: Nothing in queue, but got value from parser~n"),
+            erlang:display("eredis: Nothing in queue, but got value from parser~n"),
             exit(empty_queue)
     end.
 
@@ -296,7 +296,7 @@ safe_send(Pid, Value) ->
     try erlang:send(Pid, Value)
     catch
         Err:Reason ->
-            error_logger:info_msg("eredis: Failed to send message to ~p with reason ~p~n", [Pid, {Err, Reason}])
+            erlang:display("eredis: Failed to send message to ~p with reason ~p~n", [Pid, {Err, Reason}])
     end.
 
 %% @doc: Helper for connecting to Redis, authenticating and selecting
@@ -321,15 +321,15 @@ connect(State) ->
                         ok ->
                             {ok, State#state{socket = Socket}};
                         {error, Reason} ->
-                            error_logger:error_msg("DEBUG-2020-03-20>> eredis_client:connect -> failed to select_database due to ~p", [Reason]),
+                            erlang:display("DEBUG-2020-03-20>> eredis_client:connect -> failed to select_database due to ~p", [Reason]),
                             {error, {select_error, Reason}}
                     end;
                 {error, Reason} ->
-                    error_logger:error_msg("DEBUG-2020-03-20>> eredis_client:connect -> failed to authenticate due to ~p", [Reason]),
+                    erlang:display("DEBUG-2020-03-20>> eredis_client:connect -> failed to authenticate due to ~p", [Reason]),
                     {error, {authentication_error, Reason}}
             end;
         {error, Reason} ->
-            error_logger:error_msg("DEBUG-2020-03-20>> eredis_client:connect -> gen_tcp failed to connect due to ~p", [Reason]),
+            erlang:display("DEBUG-2020-03-20>> eredis_client:connect -> gen_tcp failed to connect due to ~p", [Reason]),
             {error, {connection_error, Reason}}
     end.
 
